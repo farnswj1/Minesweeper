@@ -64,7 +64,7 @@ class Box(object):
             window.blit(boxValue, (self.x + ((self.size - boxValue.get_width()) // 2), self.y + ((self.size - boxValue.get_height()) // 2)))
 
 
-    #Updates the current value of the box, unless the value is 0
+    #Updates the current value of the box
     def updateValue(self, value):
         self.value = str(value)
 
