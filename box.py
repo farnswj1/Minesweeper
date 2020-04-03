@@ -39,7 +39,7 @@ class Box(object):
 
         #If the box has a value, then the value is displayed
         #Clicked boxes with no values are not drawn
-        elif self.value != None and self.value != 0:
+        elif self.value != '0':
             if self.value == 'X': #This is the value for a mine
                 pygame.draw.rect(window, RED, (self.x, self.y, self.size - 1, self.size - 1))
                 boxValue = valueFont.render(self.value, True, BLACK)
@@ -66,8 +66,7 @@ class Box(object):
 
     #Updates the current value of the box, unless the value is 0
     def updateValue(self, value):
-        if value != 0:
-            self.value = str(value)
+        self.value = str(value)
 
 
     #Flips the flagged variable

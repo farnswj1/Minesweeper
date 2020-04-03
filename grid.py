@@ -21,8 +21,8 @@ class Grid(object):
         self.width = width
         self.height = height
         self.boxSize = boxSize
-        self.boxValueFont = pygame.font.SysFont('arial', boxSize)
         self.numberOfMines = numberOfMines
+        self.boxValueFont = pygame.font.SysFont('arial', boxSize)
         self.numberOfFlagsLeft = str(numberOfMines)
         self.numberOfSafeBoxes = (width * height) - numberOfMines
         self.clickEnabled = True
@@ -165,7 +165,7 @@ class Grid(object):
                 self.numberOfFlagsLeft = str(int(self.numberOfFlagsLeft) + 1)
 
             #If the box has no value, then the adjacent boxes are added if not clicked already
-            if box.value == None:
+            if box.value == '0':
                 x, y = (box.x - self.x) // self.boxSize, (box.y - self.y) // self.boxSize
 
                 #Interior boxes
