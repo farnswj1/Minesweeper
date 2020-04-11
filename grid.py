@@ -4,16 +4,13 @@ Minesweeper Grid
 February 12, 2020
 
 '''
+
 # Imported modules
 import pygame
 from random import randint
 from time import time
 from box import Box
-
-
-# Colors
-GREY = (192, 192, 192)
-BLACK = (0, 0, 0)
+from config import *
 
 
 # Grid class

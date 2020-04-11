@@ -14,18 +14,8 @@ import sys
 from levels import *
 from tkinter import messagebox
 from grid import Grid
+from config import *
 
-
-# Colors
-BLACK = (0, 0, 0)
-
-
-# Global constants (initially modified only if command line arguments are presented)
-WINDOW_WIDTH, WINDOW_HEIGHT = 600, 600
-GRID_X, GRID_Y = 0, 60
-GRID_WIDTH, GRID_HEIGHT = 20, 16
-NUMBER_OF_MINES = 30
-BOX_WIDTH_AND_HEIGHT = 30
 
 # If a level number is specified, then the game will modify the constants based on the number
 # For a custom level, all 8 values must be presented
