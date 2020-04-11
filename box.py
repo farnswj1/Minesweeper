@@ -1,8 +1,15 @@
-#Imported modules
+'''
+Justin Farnsworth
+Minesweeper Box
+February 12, 2020
+
+'''
+
+# Imported modules
 import pygame
 
 
-#Colors
+# Colors
 BLACK =     (  0,   0,   0)
 DIM_GREY =  (112, 112, 112)
 RED =       (255,   0 ,  0)
@@ -15,9 +22,9 @@ BRICK_RED = (110,  16,   5)
 DARK_CYAN = (  0, 160, 160)
 
 
-#Box class
+# Box class
 class Box(object):
-    #Constructor
+    # Constructor
     def __init__(self, positionX, positionY, size):
         self.x = positionX
         self.y = positionY
@@ -27,20 +34,20 @@ class Box(object):
         self.flagged = False
 
 
-    #Draws the box and/or its value
+    # Draws the box and/or its value
     def draw(self, window, valueFont):
-        #If the box is not clicked, then the box will be either dim grey or orange
+        # If the box is not clicked, then the box will be either dim grey or orange
         if not self.clicked:
-            #If the box is not flagged, then the box is dim grey. Otherwise, it's orange
+            # If the box is not flagged, then the box is dim grey. Otherwise, it's orange
             if self.flagged:
                 pygame.draw.rect(window, ORANGE, (self.x, self.y, self.size - 1, self.size - 1))
             else:
                 pygame.draw.rect(window, DIM_GREY, (self.x, self.y, self.size - 1, self.size - 1))
 
-        #If the box has a value, then the value is displayed
-        #Clicked boxes with no values are not drawn
+        # If the box has a value, then the value is displayed
+        # Clicked boxes with no values are not drawn
         elif self.value != '0':
-            if self.value == 'X': #This is the value for a mine
+            if self.value == 'X': # This is the value for a mine
                 pygame.draw.rect(window, RED, (self.x, self.y, self.size - 1, self.size - 1))
                 boxValue = valueFont.render(self.value, True, BLACK)
             elif self.value == '1':
@@ -60,21 +67,21 @@ class Box(object):
             elif self.value == '8':
                 boxValue = valueFont.render(self.value, True, DIM_GREY)
 
-            #The value of the box is drawn onto the screen
+            # The value of the box is drawn onto the screen
             window.blit(boxValue, (self.x + ((self.size - boxValue.get_width()) // 2), self.y + ((self.size - boxValue.get_height()) // 2)))
 
 
-    #Updates the current value of the box
+    # Updates the current value of the box
     def updateValue(self, value):
         self.value = str(value)
 
 
-    #Flips the flagged variable
+    # Flips the flagged variable
     def flipFlag(self):
         self.flagged = not self.flagged
 
 
-    #Resets the box to its defaults
+    # Resets the box to its defaults
     def reset(self):
         self.value = None
         self.flagged = False
