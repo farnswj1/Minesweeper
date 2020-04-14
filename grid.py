@@ -566,7 +566,7 @@ class Grid(object):
         return self.__gameOver
 
 
-    # Checks if the game is over.
+    # Ends the game until it's reset.
     def gameOver(self):
         self.__gameOver = True
 
