@@ -400,7 +400,7 @@ class Grid(object):
     # Identifies the box that was clicked using the provided coordinates.
     def __identifyClickedBox(self, coordinates):
         # If the coordinates are out of bounds, then no box can be returned.
-        if (self.__x < coordinates[0] < self.__x + self.__width * self.__boxSize and self.__y < coordinates[1] < self.__y + self.__height * self.__boxSize):
+        if self.__x < coordinates[0] < self.__x + self.__width * self.__boxSize and self.__y < coordinates[1] < self.__y + self.__height * self.__boxSize:
             # Aligns the clicked coordinates with the index of the box on the grid.
             return self.__boxes[(coordinates[1] - self.__y) // self.__boxSize][(coordinates[0] - self.__x) // self.__boxSize]
         else:
@@ -566,7 +566,7 @@ class Grid(object):
         return self.__gameOver
 
 
-    # Checks if the game is over.
+    # Ends the game until it's reset.
     def gameOver(self):
         self.__gameOver = True
 
