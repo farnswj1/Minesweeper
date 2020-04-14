@@ -491,7 +491,7 @@ class Grid(object):
                 pos = pygame.mouse.get_pos()
                 box = self.__identifyClickedBox(pos)
 
-                if box != None:
+                if box != None and not box.wasClicked():
                     # If it's the first click, then the mines are randomly deployed and the start time is recorded.
                     if self.__firstClick:
                         self.__deployMines(box)
