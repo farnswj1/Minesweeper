@@ -16,7 +16,6 @@ BOX_WIDTH_AND_HEIGHT = 30
 BLACK =     (  0,   0,   0)
 GREY =      (192, 192, 192)
 DIM_GREY =  (112, 112, 112)
-BLACK =     (  0,   0,   0)
 RED =       (255,   0 ,  0)
 ORANGE =    (255, 160,   0)
 BLUE =      (  0,   0, 255)

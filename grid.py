@@ -269,7 +269,7 @@ class Grid(object):
                     # Box to the left
                     if not self.__boxes[y][-2].wasClicked():
                         boxesToBeFlipped.append(self.__boxes[y][-2])
-                        self.__boxes[y][-2].wasClicked()
+                        self.__boxes[y][-2].clickBox()
 
                 # Top row (excluding corners)
                 elif 0 < x < self.__width - 1 and y == 0:
