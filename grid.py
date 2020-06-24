@@ -47,7 +47,7 @@ class Grid(object):
 
 
     # Randomly places a specified number of mines on the grid.
-    # The clicked box are its adjacent boxes are excluded from being a potential mine.
+    # The clicked box and its adjacent boxes are excluded from being a potential mine.
     def __deployMines(self, box):
         # Calculates the index of the box
         boxIndexOnGridX = (box.getX() - self.__x) // self.__boxSize
@@ -149,7 +149,7 @@ class Grid(object):
                     self.__boxes[y][x].updateValue(adjacentMines)
 
 
-    # Iteratively shows the value of boxes.
+    # Iteratively shows the values of the boxes.
     # If the box has no value, then the adjacent boxes are also flipped.
     # Base case is when the value of the box is 'X' or not 0.
     def __flipBox(self, clickedBox):

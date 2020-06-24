@@ -6,9 +6,12 @@ April 10, 2020
 '''
 
 # Global constants (initially modified only if command line arguments are presented)
-WINDOW_WIDTH, WINDOW_HEIGHT = 600, 600
-GRID_X, GRID_Y = 0, 60
-GRID_WIDTH, GRID_HEIGHT = 20, 16
+WINDOW_WIDTH = 600
+WINDOW_HEIGHT = 600
+GRID_X = 0
+GRID_Y = 60
+GRID_WIDTH = 20
+GRID_HEIGHT = 16
 NUMBER_OF_MINES = 30
 BOX_WIDTH_AND_HEIGHT = 30
 

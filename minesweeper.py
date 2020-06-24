@@ -15,6 +15,7 @@ from levels import *
 from tkinter import messagebox
 from grid import Grid
 from config import *
+import time
 
 
 # If a level number is specified, then the game will modify the constants based on the number.
@@ -125,7 +126,7 @@ def main():
     while continueProgram:
         # FPS set to 30.
         clock.tick(30)
-
+        
         # Checks for inputs and determines if the game continues.
         continueProgram = boxes.checkInputs()
         
