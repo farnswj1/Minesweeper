@@ -538,12 +538,12 @@ class Grid(object):
         gridPixelHeight = self.__height * self.__boxSize
 
         # Draws the horizontal gridlines.
-        for x in range(self.__x, self.__x + gridPixelWidth + 1, self.__boxSize):
-            pygame.draw.line(window, BLACK, (x, self.__y), (x, self.__y + gridPixelHeight))
+        for x in range(self.__x - 1, self.__x + gridPixelWidth, self.__boxSize):
+            pygame.draw.line(window, BLACK, (x, self.__y), (x, self.__y + gridPixelHeight), 2)
 
         # Draws the vertical gridlines.
-        for y in range(self.__y, self.__y + gridPixelHeight + 1, self.__boxSize):
-            pygame.draw.line(window, BLACK, (self.__x, y), (self.__x + gridPixelWidth, y))
+        for y in range(self.__y - 1, self.__y + gridPixelHeight, self.__boxSize):
+            pygame.draw.line(window, BLACK, (self.__x, y), (self.__x + gridPixelWidth, y), 2)
 
 
     # Returns the number of available flags.

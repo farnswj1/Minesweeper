@@ -20,8 +20,8 @@ class Box(object):
         self.__value = None
         self.__clicked = False
         self.__flagged = False
-        self.__mine_sprite = pygame.transform.scale(pygame.image.load('images/mine.png'), (self.__size, self.__size))
-        self.__flag_sprite = pygame.transform.scale(pygame.image.load('images/flag.png'), (self.__size, self.__size))
+        self.__mine_sprite = pygame.transform.scale(pygame.image.load('images/mine.png'), (self.__size - 2, self.__size - 2))
+        self.__flag_sprite = pygame.transform.scale(pygame.image.load('images/flag.png'), (self.__size - 2, self.__size - 2))
 
 
     # Draws the box and/or its value.
@@ -33,14 +33,14 @@ class Box(object):
 
             # If the box is flagged, then a flag is placed on the grey box.
             if self.__flagged:
-                window.blit(self.__flag_sprite, (self.__x, self.__y)) # Draw the flag sprite.
+                window.blit(self.__flag_sprite, (self.__x + 1, self.__y + 1)) # Draw the flag sprite.
 
         # If the box has a value, then the value is displayed except for 0.
         elif self.__value != '0':
             # Check to see if it's a mine first. Otherwise, show its value.
             if self.__value == 'X': # This is the value for a mine.
                 pygame.draw.rect(window, RED, (self.__x, self.__y, self.__size - 1, self.__size - 1))
-                window.blit(self.__mine_sprite, (self.__x, self.__y)) # Draw the mine sprite.
+                window.blit(self.__mine_sprite, (self.__x + 1, self.__y + 1)) # Draw the mine sprite.
             else: # All other values. (1-8)
                 if self.__value == '1':
                     boxValue = valueFont.render(self.__value, True, BLUE)
