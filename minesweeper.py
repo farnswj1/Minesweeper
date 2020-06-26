@@ -15,7 +15,6 @@ from levels import *
 from tkinter import messagebox
 from grid import Grid
 from config import *
-import time
 
 
 # If a level number is specified, then the game will modify the constants based on the number.
@@ -42,7 +41,7 @@ WINDOW_HEIGHT = (WINDOW_HEIGHT // BOX_WIDTH_AND_HEIGHT) * BOX_WIDTH_AND_HEIGHT
 
 
 # Assertions set to ensure the game runs properly.
-assert WINDOW_WIDTH >= 320
+assert WINDOW_WIDTH >= 300 and WINDOW_WIDTH >= BOX_WIDTH_AND_HEIGHT * 15
 assert WINDOW_HEIGHT >= 200
 assert GRID_X >= 0
 assert GRID_Y >= BOX_WIDTH_AND_HEIGHT * 2
@@ -111,8 +110,7 @@ def main():
     clock = pygame.time.Clock()
 
     # Initializes the font for the HUD.
-    largeFont = pygame.font.SysFont('arial', int(BOX_WIDTH_AND_HEIGHT * 1.5))
-    largeFont.set_bold(True)
+    largeFont = pygame.font.SysFont('arial', int(BOX_WIDTH_AND_HEIGHT * 1.6))
     smallFont = pygame.font.SysFont('arial', int(BOX_WIDTH_AND_HEIGHT * 0.8))
 
     # Initalizes the grid.
