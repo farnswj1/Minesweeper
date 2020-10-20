@@ -7,6 +7,7 @@ February 12, 2020
 
 # Imported modules
 import pygame
+import numpy as np
 from random import randint
 from time import time
 from box import Box
@@ -17,7 +18,6 @@ from config import *
 class Grid(object):
     # Constructor
     def __init__(self, width, height, boxSize, numberOfMines, x = 0, y = 0):
-        self.__boxes = []
         self.__x = x
         self.__y = y
         self.__width = width
@@ -25,7 +25,7 @@ class Grid(object):
         self.__boxSize = boxSize
         self.__numberOfMines = numberOfMines
         self.__boxValueFont = pygame.font.SysFont('arial', boxSize)
-        self.__numberOfFlagsLeft = str(numberOfMines)
+        self.__numberOfFlagsLeft = f"{numberOfMines}"
         self.__numberOfSafeBoxes = (width * height) - numberOfMines
         self.__clickEnabled = True
         self.__firstClick = True
@@ -34,13 +34,15 @@ class Grid(object):
         self.__gameOver = False
         self.__startTime = None
         self.__endTime = None
+        self.__mines = np.empty(numberOfMines, dtype="object")
 
-        # Intializes the boxes for the grid.
-        for y in range(self.__y, self.__y + self.__height * self.__boxSize, self.__boxSize):
-            row = []
-            for x in range(self.__x, self.__x + self.__width * self.__boxSize, self.__boxSize):
-                row.append(Box(x, y, self.__boxSize))
-            self.__boxes.append(row)
+        # Intializes the grid.
+        self.__boxes = np.empty(width * height, dtype="object").reshape((height, width))
+        
+        # Initializes the boxes and inserts them into the grid.
+        for yIndex, yPosition in enumerate(range(y, y + height * boxSize, boxSize)):
+            for xIndex, xPosition in enumerate(range(x, x + width * boxSize, boxSize)):
+                self.__boxes[yIndex, xIndex] = Box(xPosition, yPosition, boxSize)
 
 
     # Private functions
@@ -49,7 +51,7 @@ class Grid(object):
     # Randomly places a specified number of mines on the grid.
     # The clicked box and its adjacent boxes are excluded from being a potential mine.
     def __deployMines(self, box):
-        # Calculates the index of the box
+        # Calculates the index of the box.
         boxIndexOnGridX = (box.getX() - self.__x) // self.__boxSize
         boxIndexOnGridY = (box.getY() - self.__y) // self.__boxSize
 
@@ -62,91 +64,94 @@ class Grid(object):
                 x = randint(0, self.__width - 1)
                 y = randint(0, self.__height - 1)
 
-                # Checks if box[y][x] is adjacent to the clicked box. 
+                # Checks if box[y, x] is adjacent to the clicked box. 
                 # If so, then x and y are randomly generated again.
                 if not boxIndexOnGridX - 1 <= x <= boxIndexOnGridX + 1 or not boxIndexOnGridY - 1 <= y <= boxIndexOnGridY + 1:
                     # Saves the value of the box as a mine if current box isn't already one.
                     # The while loop is also terminated when the mine has been deployed.
-                    if self.__boxes[y][x].getValue() != 'X':
-                        self.__boxes[y][x].updateValue('X')
+                    if self.__boxes[y, x].getValue() != 'X':
+                        self.__boxes[y, x].updateValue('X')
+
+                        # Save the mine's location.
+                        self.__mines[i] = self.__boxes[y, x]
                         mineDeployed = True
-        
+         
         # All boxes count the number of adjacent mines and their respective values are saved.
         for y in range(self.__height):
             for x in range(self.__width):
                 # If the current box is a mine, then the counting is skipped for this box.
-                if self.__boxes[y][x].getValue() != 'X':
+                if self.__boxes[y, x].getValue() != 'X':
                     adjacentMines = 0
 
                     # Interior boxes
                     if 0 < x < self.__width - 1 and 0 < y < self.__height - 1:
-                        if self.__boxes[y - 1][x].getValue() == 'X': adjacentMines += 1     # Box directly above
-                        if self.__boxes[y + 1][x].getValue() == 'X': adjacentMines += 1     # Box directly below
-                        if self.__boxes[y][x - 1].getValue() == 'X': adjacentMines += 1     # Box to the left
-                        if self.__boxes[y][x + 1].getValue() == 'X': adjacentMines += 1     # Box to the right
-                        if self.__boxes[y - 1][x - 1].getValue() == 'X': adjacentMines += 1 # Box to the top-left
-                        if self.__boxes[y - 1][x + 1].getValue() == 'X': adjacentMines += 1 # Box to the top-right
-                        if self.__boxes[y + 1][x - 1].getValue() == 'X': adjacentMines += 1 # Box to the bottom-left
-                        if self.__boxes[y + 1][x + 1].getValue() == 'X': adjacentMines += 1 # Box to the bottom-right
+                        if self.__boxes[y - 1, x].getValue() == 'X': adjacentMines += 1     # Box directly above
+                        if self.__boxes[y + 1, x].getValue() == 'X': adjacentMines += 1     # Box directly below
+                        if self.__boxes[y, x - 1].getValue() == 'X': adjacentMines += 1     # Box to the left
+                        if self.__boxes[y, x + 1].getValue() == 'X': adjacentMines += 1     # Box to the right
+                        if self.__boxes[y - 1, x - 1].getValue() == 'X': adjacentMines += 1 # Box to the top-left
+                        if self.__boxes[y - 1, x + 1].getValue() == 'X': adjacentMines += 1 # Box to the top-right
+                        if self.__boxes[y + 1, x - 1].getValue() == 'X': adjacentMines += 1 # Box to the bottom-left
+                        if self.__boxes[y + 1, x + 1].getValue() == 'X': adjacentMines += 1 # Box to the bottom-right
                     
                     # Left-most column (excluding corners)
                     elif x == 0 and 0 < y < self.__height - 1:
-                        if self.__boxes[y - 1][0].getValue() == 'X': adjacentMines += 1 # Box directly above
-                        if self.__boxes[y + 1][0].getValue() == 'X': adjacentMines += 1 # Box directly below
-                        if self.__boxes[y - 1][1].getValue() == 'X': adjacentMines += 1 # Box to the top-right
-                        if self.__boxes[y + 1][1].getValue() == 'X': adjacentMines += 1 # Box to the bottom-right
-                        if self.__boxes[y][1].getValue() == 'X': adjacentMines += 1     # Box to the right
+                        if self.__boxes[y - 1, 0].getValue() == 'X': adjacentMines += 1 # Box directly above
+                        if self.__boxes[y + 1, 0].getValue() == 'X': adjacentMines += 1 # Box directly below
+                        if self.__boxes[y - 1, 1].getValue() == 'X': adjacentMines += 1 # Box to the top-right
+                        if self.__boxes[y + 1, 1].getValue() == 'X': adjacentMines += 1 # Box to the bottom-right
+                        if self.__boxes[y, 1].getValue() == 'X': adjacentMines += 1     # Box to the right
 
                     # Right-most column (excluding corners)
                     elif x == self.__width - 1 and 0 < y < self.__height - 1:
-                        if self.__boxes[y - 1][-1].getValue() == 'X': adjacentMines += 1 # Box directly above
-                        if self.__boxes[y + 1][-1].getValue() == 'X': adjacentMines += 1 # Box directly below
-                        if self.__boxes[y - 1][-2].getValue() == 'X': adjacentMines += 1 # Box to the top-left
-                        if self.__boxes[y + 1][-2].getValue() == 'X': adjacentMines += 1 # Box to the bottom-left
-                        if self.__boxes[y][-2].getValue() == 'X': adjacentMines += 1     # Box to the left
+                        if self.__boxes[y - 1, -1].getValue() == 'X': adjacentMines += 1 # Box directly above
+                        if self.__boxes[y + 1, -1].getValue() == 'X': adjacentMines += 1 # Box directly below
+                        if self.__boxes[y - 1, -2].getValue() == 'X': adjacentMines += 1 # Box to the top-left
+                        if self.__boxes[y + 1, -2].getValue() == 'X': adjacentMines += 1 # Box to the bottom-left
+                        if self.__boxes[y, -2].getValue() == 'X': adjacentMines += 1     # Box to the left
 
                     # Top row (excluding corners)
                     elif 0 < x < self.__width - 1 and y == 0:
-                        if self.__boxes[0][x - 1].getValue() == 'X': adjacentMines += 1 # Box to the left
-                        if self.__boxes[0][x + 1].getValue() == 'X': adjacentMines += 1 # Box to the right
-                        if self.__boxes[1][x - 1].getValue() == 'X': adjacentMines += 1 # Box to the bottom-left
-                        if self.__boxes[1][x + 1].getValue() == 'X': adjacentMines += 1 # Box to the bottom-right
-                        if self.__boxes[1][x].getValue() == 'X': adjacentMines += 1     # Box directly below
+                        if self.__boxes[0, x - 1].getValue() == 'X': adjacentMines += 1 # Box to the left
+                        if self.__boxes[0, x + 1].getValue() == 'X': adjacentMines += 1 # Box to the right
+                        if self.__boxes[1, x - 1].getValue() == 'X': adjacentMines += 1 # Box to the bottom-left
+                        if self.__boxes[1, x + 1].getValue() == 'X': adjacentMines += 1 # Box to the bottom-right
+                        if self.__boxes[1, x].getValue() == 'X': adjacentMines += 1     # Box directly below
 
                     # Bottom row (excluding corners)
                     elif 0 < x < self.__width - 1 and y == self.__height - 1:
-                        if self.__boxes[-1][x - 1].getValue() == 'X': adjacentMines += 1 # Box to the left
-                        if self.__boxes[-1][x + 1].getValue() == 'X': adjacentMines += 1 # Box to the right
-                        if self.__boxes[-2][x - 1].getValue() == 'X': adjacentMines += 1 # Box to the top-left
-                        if self.__boxes[-2][x + 1].getValue() == 'X': adjacentMines += 1 # Box to the top-right
-                        if self.__boxes[-2][x].getValue() == 'X': adjacentMines += 1     # Box directly above
+                        if self.__boxes[-1, x - 1].getValue() == 'X': adjacentMines += 1 # Box to the left
+                        if self.__boxes[-1, x + 1].getValue() == 'X': adjacentMines += 1 # Box to the right
+                        if self.__boxes[-2, x - 1].getValue() == 'X': adjacentMines += 1 # Box to the top-left
+                        if self.__boxes[-2, x + 1].getValue() == 'X': adjacentMines += 1 # Box to the top-right
+                        if self.__boxes[-2, x].getValue() == 'X': adjacentMines += 1     # Box directly above
 
                     # Top-left corner
                     elif x == 0 and y == 0:
-                        if self.__boxes[0][1].getValue() == 'X': adjacentMines += 1 # Box to the right
-                        if self.__boxes[1][0].getValue() == 'X': adjacentMines += 1 # Box directly below
-                        if self.__boxes[1][1].getValue() == 'X': adjacentMines += 1 # Box to the bottom-right
+                        if self.__boxes[0, 1].getValue() == 'X': adjacentMines += 1 # Box to the right
+                        if self.__boxes[1, 0].getValue() == 'X': adjacentMines += 1 # Box directly below
+                        if self.__boxes[1, 1].getValue() == 'X': adjacentMines += 1 # Box to the bottom-right
 
                     # Top-right corner
                     elif x == 0 and y == self.__height - 1:
-                        if self.__boxes[-1][1].getValue() == 'X': adjacentMines += 1 # Box to the right
-                        if self.__boxes[-2][0].getValue() == 'X': adjacentMines += 1 # Box directly above
-                        if self.__boxes[-2][1].getValue() == 'X': adjacentMines += 1 # Box to the top-right
+                        if self.__boxes[-1, 1].getValue() == 'X': adjacentMines += 1 # Box to the right
+                        if self.__boxes[-2, 0].getValue() == 'X': adjacentMines += 1 # Box directly above
+                        if self.__boxes[-2, 1].getValue() == 'X': adjacentMines += 1 # Box to the top-right
 
                     # Bottom-left corner
                     elif x == self.__width - 1 and y == 0:
-                        if self.__boxes[0][-2].getValue() == 'X': adjacentMines += 1 # Box to the left
-                        if self.__boxes[1][-1].getValue() == 'X': adjacentMines += 1 # Box directly below
-                        if self.__boxes[1][-2].getValue() == 'X': adjacentMines += 1 # Box to the bottom-left
+                        if self.__boxes[0, -2].getValue() == 'X': adjacentMines += 1 # Box to the left
+                        if self.__boxes[1, -1].getValue() == 'X': adjacentMines += 1 # Box directly below
+                        if self.__boxes[1, -2].getValue() == 'X': adjacentMines += 1 # Box to the bottom-left
 
                     # Bottom-right corner
                     elif x == self.__width - 1 and y == self.__height - 1:
-                        if self.__boxes[-1][-2].getValue() == 'X': adjacentMines += 1 # Box to the left
-                        if self.__boxes[-2][-1].getValue() == 'X': adjacentMines += 1 # Box directly above
-                        if self.__boxes[-2][-2].getValue() == 'X': adjacentMines += 1 # Box to the top-left
+                        if self.__boxes[-1, -2].getValue() == 'X': adjacentMines += 1 # Box to the left
+                        if self.__boxes[-2, -1].getValue() == 'X': adjacentMines += 1 # Box directly above
+                        if self.__boxes[-2, -2].getValue() == 'X': adjacentMines += 1 # Box to the top-left
                     
                     # Updates the value of the box by saving the number of adjacent mines.
-                    self.__boxes[y][x].updateValue(adjacentMines)
+                    self.__boxes[y, x].updateValue(adjacentMines)
 
 
     # Iteratively shows the values of the boxes.
@@ -158,7 +163,7 @@ class Grid(object):
         clickedBox.clickBox()
 
         # The loop repeats until the list is empty.
-        while len(boxesToBeFlipped) > 0:
+        while boxesToBeFlipped:
             box = boxesToBeFlipped[0]
             
             # If the box isn't a mine, then the number of safe boxes remaining decreases by 1.
@@ -169,7 +174,7 @@ class Grid(object):
             # The flag is also flipped. (set to False)
             if box.isFlagged():
                 box.flipFlag()
-                self.__numberOfFlagsLeft = str(int(self.__numberOfFlagsLeft) + 1)
+                self.__numberOfFlagsLeft = f"{int(self.__numberOfFlagsLeft) + 1}"
 
             # If the box's value is 0, then the adjacent boxes are added if not clicked already.
             if box.getValue() == '0':
@@ -178,220 +183,220 @@ class Grid(object):
                 # Interior boxes
                 if 0 < x < self.__width - 1 and 0 < y < self.__height - 1:
                     # Box directly above
-                    if not self.__boxes[y - 1][x].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y - 1][x])
-                        self.__boxes[y - 1][x].clickBox()
+                    if not self.__boxes[y - 1, x].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y - 1, x])
+                        self.__boxes[y - 1, x].clickBox()
 
                     # Box directly below
-                    if not self.__boxes[y + 1][x].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y + 1][x])
-                        self.__boxes[y + 1][x].clickBox()
+                    if not self.__boxes[y + 1, x].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y + 1, x])
+                        self.__boxes[y + 1, x].clickBox()
 
                     # Box to the left
-                    if not self.__boxes[y][x - 1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y][x - 1])
-                        self.__boxes[y][x - 1].clickBox()
+                    if not self.__boxes[y, x - 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y, x - 1])
+                        self.__boxes[y, x - 1].clickBox()
 
                     # Box to the right
-                    if not self.__boxes[y][x + 1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y][x + 1])
-                        self.__boxes[y][x + 1].clickBox()
+                    if not self.__boxes[y, x + 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y, x + 1])
+                        self.__boxes[y, x + 1].clickBox()
 
                     # Box to the top-left
-                    if not self.__boxes[y - 1][x - 1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y - 1][x - 1])
-                        self.__boxes[y - 1][x - 1].clickBox()
+                    if not self.__boxes[y - 1, x - 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y - 1, x - 1])
+                        self.__boxes[y - 1, x - 1].clickBox()
 
                     # Box to the top-right
-                    if not self.__boxes[y - 1][x + 1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y - 1][x + 1])
-                        self.__boxes[y - 1][x + 1].clickBox()
+                    if not self.__boxes[y - 1, x + 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y - 1, x + 1])
+                        self.__boxes[y - 1, x + 1].clickBox()
 
                     # Box to the bottom-left
-                    if not self.__boxes[y + 1][x - 1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y + 1][x - 1])
-                        self.__boxes[y + 1][x - 1].clickBox()
+                    if not self.__boxes[y + 1, x - 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y + 1, x - 1])
+                        self.__boxes[y + 1, x - 1].clickBox()
 
                     # Box to the bottom-right
-                    if not self.__boxes[y + 1][x + 1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y + 1][x + 1])
-                        self.__boxes[y + 1][x + 1].clickBox()
+                    if not self.__boxes[y + 1, x + 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y + 1, x + 1])
+                        self.__boxes[y + 1, x + 1].clickBox()
 
                 # Left-most column (excluding corners)
                 elif x == 0 and 0 < y < self.__height - 1:
                     # Box directly above
-                    if not self.__boxes[y - 1][0].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y - 1][0])
-                        self.__boxes[y - 1][0].clickBox()
+                    if not self.__boxes[y - 1, 0].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y - 1, 0])
+                        self.__boxes[y - 1, 0].clickBox()
 
                     # Box directly below
-                    if not self.__boxes[y + 1][0].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y + 1][0])
-                        self.__boxes[y + 1][0].clickBox()
+                    if not self.__boxes[y + 1, 0].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y + 1, 0])
+                        self.__boxes[y + 1, 0].clickBox()
 
                     # Box to the top-right
-                    if not self.__boxes[y - 1][1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y - 1][1])
-                        self.__boxes[y - 1][1].clickBox()
+                    if not self.__boxes[y - 1, 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y - 1, 1])
+                        self.__boxes[y - 1, 1].clickBox()
 
                     # Box to the bottom-right
-                    if not self.__boxes[y + 1][1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y + 1][1])
-                        self.__boxes[y + 1][1].clickBox()
+                    if not self.__boxes[y + 1, 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y + 1, 1])
+                        self.__boxes[y + 1, 1].clickBox()
 
                     # Box to the right
-                    if not self.__boxes[y][1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y][1])
-                        self.__boxes[y][1].clickBox()
+                    if not self.__boxes[y, 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y, 1])
+                        self.__boxes[y, 1].clickBox()
 
                 # Right-most column (excluding corners)
                 elif x == self.__width - 1 and 0 < y < self.__height - 1:
                     # Box directly above
-                    if not self.__boxes[y - 1][-1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y - 1][-1])
-                        self.__boxes[y - 1][-1].clickBox()
+                    if not self.__boxes[y - 1, -1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y - 1, -1])
+                        self.__boxes[y - 1, -1].clickBox()
 
                     # Box directly below
-                    if not self.__boxes[y + 1][-1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y + 1][-1])
-                        self.__boxes[y + 1][-1].clickBox()
+                    if not self.__boxes[y + 1, -1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y + 1, -1])
+                        self.__boxes[y + 1, -1].clickBox()
 
                     # Box to the top-left
-                    if not self.__boxes[y - 1][-2].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y - 1][-2])
-                        self.__boxes[y - 1][-2].clickBox()
+                    if not self.__boxes[y - 1, -2].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y - 1, -2])
+                        self.__boxes[y - 1, -2].clickBox()
 
                     # Box to the bottom-left
-                    if not self.__boxes[y + 1][-2].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y + 1][-2])
-                        self.__boxes[y + 1][-2].clickBox()
+                    if not self.__boxes[y + 1, -2].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y + 1, -2])
+                        self.__boxes[y + 1, -2].clickBox()
                     
                     # Box to the left
-                    if not self.__boxes[y][-2].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[y][-2])
-                        self.__boxes[y][-2].clickBox()
+                    if not self.__boxes[y, -2].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[y, -2])
+                        self.__boxes[y, -2].clickBox()
 
                 # Top row (excluding corners)
                 elif 0 < x < self.__width - 1 and y == 0:
                     # Box to the left
-                    if not self.__boxes[0][x - 1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[0][x - 1])
-                        self.__boxes[0][x - 1].clickBox()
+                    if not self.__boxes[0, x - 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[0, x - 1])
+                        self.__boxes[0, x - 1].clickBox()
 
                     # Box to the right
-                    if not self.__boxes[0][x + 1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[0][x + 1])
-                        self.__boxes[0][x + 1].clickBox()
+                    if not self.__boxes[0, x + 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[0, x + 1])
+                        self.__boxes[0, x + 1].clickBox()
 
                     # Box to the bottom-left
-                    if not self.__boxes[1][x - 1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[1][x - 1])
-                        self.__boxes[1][x - 1].clickBox()
+                    if not self.__boxes[1, x - 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[1, x - 1])
+                        self.__boxes[1, x - 1].clickBox()
 
                     # Box to the bottom-right
-                    if not self.__boxes[1][x + 1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[1][x + 1])
-                        self.__boxes[1][x + 1].clickBox()
+                    if not self.__boxes[1, x + 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[1, x + 1])
+                        self.__boxes[1, x + 1].clickBox()
 
                     # Box directly below
-                    if not self.__boxes[1][x].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[1][x])
-                        self.__boxes[1][x].clickBox()
+                    if not self.__boxes[1, x].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[1, x])
+                        self.__boxes[1, x].clickBox()
                 
                 # Bottom row (excluding corners)
                 elif 0 < x < self.__width - 1 and y == self.__height - 1:
                     # Box to the left
-                    if not self.__boxes[-1][x - 1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[-1][x - 1])
-                        self.__boxes[-1][x - 1].clickBox()
+                    if not self.__boxes[-1, x - 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[-1, x - 1])
+                        self.__boxes[-1, x - 1].clickBox()
 
                     # Box to the right
-                    if not self.__boxes[-1][x + 1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[-1][x + 1])
-                        self.__boxes[-1][x + 1].clickBox()
+                    if not self.__boxes[-1, x + 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[-1, x + 1])
+                        self.__boxes[-1, x + 1].clickBox()
 
                     # Box to the top-left
-                    if not self.__boxes[-2][x - 1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[-2][x - 1])
-                        self.__boxes[-2][x - 1].clickBox()
+                    if not self.__boxes[-2, x - 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[-2, x - 1])
+                        self.__boxes[-2, x - 1].clickBox()
 
                     # Box to the top-right
-                    if not self.__boxes[-2][x + 1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[-2][x + 1])
-                        self.__boxes[-2][x + 1].clickBox()
+                    if not self.__boxes[-2, x + 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[-2, x + 1])
+                        self.__boxes[-2, x + 1].clickBox()
 
                     # Box directly above
-                    if not self.__boxes[-2][x].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[-2][x])
-                        self.__boxes[-2][x].clickBox()
+                    if not self.__boxes[-2, x].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[-2, x])
+                        self.__boxes[-2, x].clickBox()
                 
                 # Top-left corner
                 elif x == 0 and y == 0:
                     # Box to the left
-                    if not self.__boxes[0][1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[0][1])
-                        self.__boxes[0][1].clickBox()
+                    if not self.__boxes[0, 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[0, 1])
+                        self.__boxes[0, 1].clickBox()
 
                     # Box directly below
-                    if not self.__boxes[1][0].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[1][0])
-                        self.__boxes[1][0].clickBox()
+                    if not self.__boxes[1, 0].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[1, 0])
+                        self.__boxes[1, 0].clickBox()
 
                     # Box to the bottom-right
-                    if not self.__boxes[1][1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[1][1])
-                        self.__boxes[1][1].clickBox()
+                    if not self.__boxes[1, 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[1, 1])
+                        self.__boxes[1, 1].clickBox()
 
                 # Top-right corner
                 elif x == 0 and y == self.__height - 1:
                     # Box to the right
-                    if not self.__boxes[-1][1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[-1][1])
-                        self.__boxes[-1][1].clickBox()
+                    if not self.__boxes[-1, 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[-1, 1])
+                        self.__boxes[-1, 1].clickBox()
 
                     # Box directly above
-                    if not self.__boxes[-2][0].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[-2][0])
-                        self.__boxes[-2][0].clickBox()
+                    if not self.__boxes[-2, 0].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[-2, 0])
+                        self.__boxes[-2, 0].clickBox()
 
                     # Box to the top-right
-                    if not self.__boxes[-2][1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[-2][1])
-                        self.__boxes[-2][1].clickBox()
+                    if not self.__boxes[-2, 1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[-2, 1])
+                        self.__boxes[-2, 1].clickBox()
 
                 # Bottom-left corner
                 elif x == self.__width - 1 and y == 0:
                     # Box to the left
-                    if not self.__boxes[0][-2].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[0][-2])
-                        self.__boxes[0][-2].clickBox()
+                    if not self.__boxes[0, -2].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[0, -2])
+                        self.__boxes[0, -2].clickBox()
 
                     # Box directly below
-                    if not self.__boxes[1][-1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[1][-1])
-                        self.__boxes[1][-1].clickBox()
+                    if not self.__boxes[1, -1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[1, -1])
+                        self.__boxes[1, -1].clickBox()
 
                     # Box to the bottom-left
-                    if not self.__boxes[1][-2].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[1][-2])
-                        self.__boxes[1][-2].clickBox()
+                    if not self.__boxes[1, -2].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[1, -2])
+                        self.__boxes[1, -2].clickBox()
 
                 # Bottom-right corner
                 elif x == self.__width - 1 and y == self.__height - 1:
                     # Box to the left
-                    if not self.__boxes[-1][-2].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[-1][-2])
-                        self.__boxes[-1][-2].clickBox()
+                    if not self.__boxes[-1, -2].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[-1, -2])
+                        self.__boxes[-1, -2].clickBox()
 
                     # Box directly above
-                    if not self.__boxes[-2][-1].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[-2][-1])
-                        self.__boxes[-2][-1].clickBox()
+                    if not self.__boxes[-2, -1].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[-2, -1])
+                        self.__boxes[-2, -1].clickBox()
 
                     # Box to the top-left
-                    if not self.__boxes[-2][-2].wasClicked():
-                        boxesToBeFlipped.append(self.__boxes[-2][-2])
-                        self.__boxes[-2][-2].clickBox()
+                    if not self.__boxes[-2, -2].wasClicked():
+                        boxesToBeFlipped.append(self.__boxes[-2, -2])
+                        self.__boxes[-2, -2].clickBox()
 
             # The first box in the list is removed from the list.
             boxesToBeFlipped.pop(0)
@@ -402,7 +407,7 @@ class Grid(object):
         # If the coordinates are out of bounds, then no box can be returned.
         if self.__x < coordinates[0] < self.__x + self.__width * self.__boxSize and self.__y < coordinates[1] < self.__y + self.__height * self.__boxSize:
             # Aligns the clicked coordinates with the index of the box on the grid.
-            return self.__boxes[(coordinates[1] - self.__y) // self.__boxSize][(coordinates[0] - self.__x) // self.__boxSize]
+            return self.__boxes[(coordinates[1] - self.__y) // self.__boxSize, (coordinates[0] - self.__x) // self.__boxSize]
         else:
             # Out of bounds. No box could be returned.
             return None
@@ -411,23 +416,20 @@ class Grid(object):
     # Flags the mines on the grid.
     # Used only when there are no safe boxes left.
     def __flagMines(self):
-        for row in self.__boxes:
-            for box in row:
-                if box.getValue() == 'X' and not box.isFlagged():
-                    box.flipFlag()
-                    self.__numberOfFlagsLeft = str(int(self.__numberOfFlagsLeft) - 1)
+        for mine in self.__mines:
+            if not mine.isFlagged():
+                mine.flipFlag()
+                self.__numberOfFlagsLeft = f"{int(self.__numberOfFlagsLeft) - 1}"
 
 
     # Flips the mines on the grid.
     # Used only when a mine has been clicked.
     def __flipMines(self):
-        for row in self.__boxes:
-            for box in row:
-                if box.getValue() == 'X':
-                    box.clickBox()
-                    if box.isFlagged():
-                        box.flipFlag()
-                        self.__numberOfFlagsLeft = str(int(self.__numberOfFlagsLeft) + 1)
+        for mine in self.__mines:
+            mine.clickBox()
+            if mine.isFlagged():
+                mine.flipFlag()
+                self.__numberOfFlagsLeft = f"{int(self.__numberOfFlagsLeft) + 1}"
 
 
     # Checks for any safe boxes. If so, returns true. Otherwise, returns false.
@@ -440,7 +442,7 @@ class Grid(object):
         for row in self.__boxes:
             for box in row:
                 box.reset()
-        self.__numberOfFlagsLeft = str(self.__numberOfMines)
+        self.__numberOfFlagsLeft = f"{self.__numberOfMines}"
         self.__numberOfSafeBoxes = (self.__width * self.__height) - self.__numberOfMines
         self.__clickEnabled = True
         self.__firstClick = True
@@ -449,6 +451,7 @@ class Grid(object):
         self.__gameOver = False
         self.__startTime = None
         self.__endTime = None
+        self.__mines[:] = None
 
 
     # Public functions
@@ -477,12 +480,12 @@ class Grid(object):
                 if box != None and not box.wasClicked():
                     # Flags the box and decrements the number of flags left by 1.
                     if not box.isFlagged() and 0 < int(self.__numberOfFlagsLeft):
-                        self.__numberOfFlagsLeft = str(int(self.__numberOfFlagsLeft) - 1)
+                        self.__numberOfFlagsLeft = f"{int(self.__numberOfFlagsLeft) - 1}"
                         box.flipFlag()
                     
                     # Unflags the box and increments the number of flags left by 1.
                     elif box.isFlagged() and int(self.__numberOfFlagsLeft) < self.__numberOfMines:
-                        self.__numberOfFlagsLeft = str(int(self.__numberOfFlagsLeft) + 1)
+                        self.__numberOfFlagsLeft = f"{int(self.__numberOfFlagsLeft) + 1}"
                         box.flipFlag()
 
             # Left mouse click shows the box's value.
@@ -525,17 +528,17 @@ class Grid(object):
     # Draws the the boxes and lines that make up the grid.
     # NOTE: The screen must be updated for the grid to appear on the screen.
     def draw(self, window):
-        # Makes the entire screen grey.
-        window.fill(GREY)
+        # Variables needed to draw the background and gridlines.
+        gridPixelWidth = self.__width * self.__boxSize
+        gridPixelHeight = self.__height * self.__boxSize
+
+        # Draws the background of the grid.
+        pygame.draw.rect(window, GREY, (self.__x, self.__y, gridPixelWidth, gridPixelHeight))
 
         # Draws each box.
         for row in self.__boxes:
             for box in row:
                 box.draw(window, self.__boxValueFont)
-
-        # Variables needed to draw the gridlines.
-        gridPixelWidth = self.__width * self.__boxSize
-        gridPixelHeight = self.__height * self.__boxSize
 
         # Draws the horizontal gridlines.
         for x in range(self.__x - 1, self.__x + gridPixelWidth, self.__boxSize):

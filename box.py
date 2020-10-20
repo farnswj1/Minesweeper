@@ -20,8 +20,14 @@ class Box(object):
         self.__value = None
         self.__clicked = False
         self.__flagged = False
-        self.__mine_sprite = pygame.transform.scale(pygame.image.load('images/mine.png'), (self.__size - 2, self.__size - 2))
-        self.__flag_sprite = pygame.transform.scale(pygame.image.load('images/flag.png'), (self.__size - 2, self.__size - 2))
+        self.__mine_sprite = pygame.transform.scale(
+            pygame.image.load('images/mine.png'), 
+            (size - 2, size - 2)
+        )
+        self.__flag_sprite = pygame.transform.scale(
+            pygame.image.load('images/flag.png'), 
+            (size - 2, size - 2)
+        )
 
 
     # Draws the box and/or its value.
@@ -80,7 +86,7 @@ class Box(object):
 
     # Updates the current value of the box.
     def updateValue(self, value):
-        self.__value = str(value)
+        self.__value = f"{value}"
 
 
     # Sets clicked to True.

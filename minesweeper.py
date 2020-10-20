@@ -25,37 +25,37 @@ if len(sys.argv) == 2:
     GRID_X, GRID_Y = ARGUMENTS[2], ARGUMENTS[3]
     GRID_WIDTH, GRID_HEIGHT = ARGUMENTS[4], ARGUMENTS[5]
     NUMBER_OF_MINES = ARGUMENTS[6]
-    BOX_WIDTH_AND_HEIGHT = ARGUMENTS[7]
+    BOX_SIZE = ARGUMENTS[7]
     del ARGUMENTS
 elif len(sys.argv) == 9:
     WINDOW_WIDTH, WINDOW_HEIGHT = int(sys.argv[1]), int(sys.argv[2])
     GRID_X, GRID_Y = int(sys.argv[3]), int(sys.argv[4])
     GRID_WIDTH, GRID_HEIGHT = int(sys.argv[5]), int(sys.argv[6])
     NUMBER_OF_MINES = int(sys.argv[7])
-    BOX_WIDTH_AND_HEIGHT = int(sys.argv[8])
+    BOX_SIZE = int(sys.argv[8])
 
 
 # Modifies windowWidth and windowHeight so that it aligns with the dimensions of the grid.
-WINDOW_WIDTH = (WINDOW_WIDTH // BOX_WIDTH_AND_HEIGHT) * BOX_WIDTH_AND_HEIGHT
-WINDOW_HEIGHT = (WINDOW_HEIGHT // BOX_WIDTH_AND_HEIGHT) * BOX_WIDTH_AND_HEIGHT
+WINDOW_WIDTH = (WINDOW_WIDTH // BOX_SIZE) * BOX_SIZE
+WINDOW_HEIGHT = (WINDOW_HEIGHT // BOX_SIZE) * BOX_SIZE
 
 
 # Assertions set to ensure the game runs properly.
-assert WINDOW_WIDTH >= 300 and WINDOW_WIDTH >= BOX_WIDTH_AND_HEIGHT * 15
+assert WINDOW_WIDTH >= 300 and WINDOW_WIDTH >= BOX_SIZE * 15
 assert WINDOW_HEIGHT >= 200
 assert GRID_X >= 0
-assert GRID_Y >= BOX_WIDTH_AND_HEIGHT * 2
+assert GRID_Y >= BOX_SIZE * 2
 assert GRID_WIDTH >= 6
 assert GRID_HEIGHT >= 6
 assert 1 <= NUMBER_OF_MINES <= 0.3 * (GRID_WIDTH * GRID_HEIGHT)
-assert BOX_WIDTH_AND_HEIGHT >= 20
-assert GRID_X + (GRID_WIDTH * BOX_WIDTH_AND_HEIGHT) <= WINDOW_WIDTH
-assert GRID_Y + (GRID_HEIGHT * BOX_WIDTH_AND_HEIGHT) + (BOX_WIDTH_AND_HEIGHT * 2) <= WINDOW_HEIGHT
+assert BOX_SIZE >= 20
+assert GRID_X + (GRID_WIDTH * BOX_SIZE) <= WINDOW_WIDTH
+assert GRID_Y + (GRID_HEIGHT * BOX_SIZE) + (BOX_SIZE * 2) <= WINDOW_HEIGHT
 
 
 # Converts the integer value of NUMBER_OF_MINES into a string and saves it.
 # Used for displaying the number of mines on the screen.
-STRING_NUMBER_OF_MINES = str(NUMBER_OF_MINES)
+STRING_NUMBER_OF_MINES = f"{NUMBER_OF_MINES}"
 
 
 # Draws the HUD.
@@ -71,10 +71,10 @@ def drawHeader(window, largeFont, smallFont, numberOfFlagsLeft):
     # Prints the text directly above.
     window.blit(flagInfo, (5, 0))
     window.blit(numberOfMinesInfo, ((WINDOW_WIDTH - numberOfMinesInfo.get_width()) - 5, 0))
-    window.blit(leftClickInfo, (5, WINDOW_HEIGHT - (BOX_WIDTH_AND_HEIGHT * 2)))
-    window.blit(rightClickInfo, (5, WINDOW_HEIGHT - BOX_WIDTH_AND_HEIGHT))
-    window.blit(spacebarInfo, (WINDOW_WIDTH - spacebarInfo.get_width() - 5, WINDOW_HEIGHT - (BOX_WIDTH_AND_HEIGHT * 2)))
-    window.blit(escapeKeyInfo, (WINDOW_WIDTH - escapeKeyInfo.get_width() - 5, WINDOW_HEIGHT - BOX_WIDTH_AND_HEIGHT))
+    window.blit(leftClickInfo, (5, WINDOW_HEIGHT - (BOX_SIZE * 2)))
+    window.blit(rightClickInfo, (5, WINDOW_HEIGHT - BOX_SIZE))
+    window.blit(spacebarInfo, (WINDOW_WIDTH - spacebarInfo.get_width() - 5, WINDOW_HEIGHT - (BOX_SIZE * 2)))
+    window.blit(escapeKeyInfo, (WINDOW_WIDTH - escapeKeyInfo.get_width() - 5, WINDOW_HEIGHT - BOX_SIZE))
     
 
 # Sets up the message box for winning/losing condition.
@@ -91,12 +91,12 @@ def messageBox(subject, content):
 
 # Prints losing message.
 def losingMessage():
-    messageBox('You lost!', 'You lost...\nTry again!')
+    messageBox("You lost!", "You lost...\nTry again!")
 
 
 # Prints winning message.
 def winningMessage(time):
-    messageBox('You won!', 'Congratulations!\nTime: ' + str(time) + ' seconds')
+    messageBox("You won!", f"Congratulations!\nTime: {time} seconds")
 
 
 # Main function initializes the game.
@@ -110,11 +110,11 @@ def main():
     clock = pygame.time.Clock()
 
     # Initializes the font for the HUD.
-    largeFont = pygame.font.SysFont('arial', int(BOX_WIDTH_AND_HEIGHT * 1.6))
-    smallFont = pygame.font.SysFont('arial', int(BOX_WIDTH_AND_HEIGHT * 0.8))
+    largeFont = pygame.font.SysFont('arial', int(BOX_SIZE * 1.6))
+    smallFont = pygame.font.SysFont('arial', int(BOX_SIZE * 0.8))
 
     # Initalizes the grid.
-    boxes = Grid(GRID_WIDTH, GRID_HEIGHT, BOX_WIDTH_AND_HEIGHT, NUMBER_OF_MINES, GRID_X, GRID_Y)
+    boxes = Grid(GRID_WIDTH, GRID_HEIGHT, BOX_SIZE, NUMBER_OF_MINES, GRID_X, GRID_Y)
 
     # Determines if the game continues or terminates.
     continueProgram = True
@@ -127,6 +127,9 @@ def main():
         
         # Checks for inputs and determines if the game continues.
         continueProgram = boxes.checkInputs()
+
+        # Makes the entire screen grey.
+        window.fill(WHITE)
         
         # Draws the grid.
         boxes.draw(window)
